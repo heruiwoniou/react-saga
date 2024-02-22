@@ -8,6 +8,13 @@
     "dist",
     "src"
   ],
+  "keywords": [
+    "react",
+    "saga",
+    "react-context",
+    "react-saga",
+    "useSagaReducer"
+  ],
   "exports": {
     ".": {
       "type": "module",
