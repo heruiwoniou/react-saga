@@ -5,6 +5,8 @@ Provides a local use of saga based state management
 ### useSagaReduder
 
 ```jsx
+import { useSagaReducer } from '@ideveloper.eu.org/react-saga';
+import { eventChannel, END } from 'redux-saga';
 
 const model = {
   state: {
@@ -18,7 +20,7 @@ const model = {
     },
   },
   effects: {
-    *asyncIncrease(payload, { set, put, call, take, cancelled, select, race }) {
+    *asyncIncrease(payload, { set, call, take, cancelled, select, race }) {
       yield set((state) => void (state.isAsync = true));
       const defaultSeconds = yield select((state) => state.seconds);
       const chan = yield call(model.helper.countdown, defaultSeconds);
@@ -32,7 +34,7 @@ const model = {
           } finally {
             if (yield cancelled()) {
               chan.close();
-              console.log('countdown cancelled');
+              console.log("countdown cancelled");
               yield set((state) => {
                 state.isAsync = false;
                 state.seconds = defaultSeconds;
@@ -46,7 +48,7 @@ const model = {
             }
           }
         }),
-        cancel: take('cancelAsyncIncrease'),
+        cancel: take("cancelAsyncIncrease"),
       });
     },
   },
@@ -77,28 +79,29 @@ export default function Counter() {
   return (
     <>
       <h2>useSagaReducer</h2>
-      <Row>
-        <p tw="my-2">Current Counter: {count}</p>
-        <Space>
-          <Button type="primary" onClick={() => dispatch({ type: 'increase' })}>
+      <div>
+        <p style={{ margin: "10px 0" }}>Current Counter: {count}</p>
+        <div>
+          <button onClick={() => dispatch({ type: "increase" })}>
             Sync Increase
-          </Button>
-          <Button
-            type="primary"
+          </button>
+          <button
             onClick={() =>
               isAsync
                 ? dispatch({
-                    type: 'cancelAsyncIncrease',
+                    type: "cancelAsyncIncrease",
                   })
                 : dispatch({
-                    type: 'asyncIncrease',
+                    type: "asyncIncrease",
                   })
             }
           >
-            {`${isAsync ? `Async Increasing ... (${seconds})` : 'Async Increase'}`}
-          </Button>
-        </Space>
-      </Row>
+            {`${
+              isAsync ? `Async Increasing ... (${seconds})` : "Async Increase"
+            }`}
+          </button>
+        </div>
+      </div>
     </>
   );
 }
