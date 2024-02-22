@@ -14,6 +14,8 @@ export const EMPTY_OBJECT = {};
 
 export const EMPTY_ARRAY = [];
 
+export const identity = <T extends any>(_: T): T => _;
+
 let ID = 1;
 export const uniqueId = () => {
   return String(ID++);

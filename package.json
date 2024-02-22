@@ -1,6 +1,6 @@
 {
   "name": "@ideveloper.eu.org/react-saga",
-  "version": "0.0.4",
+  "version": "0.0.11",
   "author": "heruiwoniou@qq.com",
   "repository": "https://github.com/heruiwoniou/react-saga",
   "homepage": "https://github.com/heruiwoniou/react-saga",
@@ -19,11 +19,7 @@
   ],
   "exports": {
     ".": {
-      "type": "module",
-      "import": "./dist/es/index.js"
-    },
-    ".js": {
-      "type": "commonjs",
+      "import": "./dist/es/index.js",
       "require": "./dist/index.js"
     }
   },

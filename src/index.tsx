@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import {
   SET_SYMBOL,
   META_SYMBOL,
   EMPTY_OBJECT,
   uniqueId,
   flattenEntries,
+  identity,
 } from "./utils";
-import sagaEffects from "redux-saga/effects";
+import * as sagaEffects from "redux-saga/effects";
 import { AnyAction, runSaga, stdChannel } from "redux-saga";
 import { ImmerReducer, useImmerReducer } from "use-immer";
 import { Draft } from "immer";
@@ -43,8 +52,8 @@ export type EffectMap<
   EffectsMethods extends CombineEffects = CombineEffects
 > = {
   [key: string]:
-    | EffectMap<A, EffectsMethods>
-    | EffectGeneratorFunction<A, EffectsMethods>;
+  | EffectMap<A, EffectsMethods>
+  | EffectGeneratorFunction<A, EffectsMethods>;
 };
 
 export type EffectsStructure<A, EffectsMethods extends CombineEffects> = {
@@ -88,7 +97,7 @@ export function useSagaReducer<
     ({ ...defaultReducer, ...initialReducer })[action.type]?.(draft, action) ||
       draft;
   },
-  initialState);
+    initialState);
   const sagaEnv = useRef(state);
   sagaEnv.current = state;
   const channel = useMemo(() => stdChannel(), []);
@@ -152,4 +161,52 @@ export function useSagaReducer<
   }, []);
 
   return [state, dispatch];
+}
+
+export default function ContextCreator<
+  S extends Record<string, any>,
+  R extends ReducerMap<S, A>,
+  E extends EffectMap<A>,
+  A extends AnyAction
+>(model: Model<S, R, E>) {
+  const ModuleContext = createContext<ReturnType<typeof useSagaReducer> | null>(null);
+
+  const useContextState = (fn = identity) => {
+    const context = useContext(ModuleContext);
+    if (context) {
+      const [state] = context;
+      return fn(state);
+    }
+    throw new Error("not in correct context")
+  };
+
+  const useContextDispatch = () => {
+    const context = useContext(ModuleContext);
+    if (context) {
+      const [, dispatch] = context;
+      return dispatch;
+    }
+    throw new Error("not in correct context")
+  };
+
+  const ContextProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+    const state = useSagaReducer<S, R, E, A>(model);
+    return (
+      <ModuleContext.Provider value={state}>{children}</ModuleContext.Provider>
+    );
+  };
+
+  const connect = (Component: React.ComponentType<any>) => () =>
+  (
+    <ContextProvider>
+      <Component />
+    </ContextProvider>
+  );
+
+  return {
+    connect,
+    useContextState,
+    useContextDispatch,
+    ContextProvider,
+  };
 }

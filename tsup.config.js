@@ -1,12 +1,12 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.tsx"],
   splitting: false,
   sourcemap: false,
   clean: true,
   minify: "terser",
   treeshake: true,
   format: ["es", "cjs"],
-  legacyOutput: true
+  legacyOutput: true,
 });
