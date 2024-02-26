@@ -104,8 +104,11 @@ export function useSagaReducer<
   const entities = useMemo(() => flattenEntries(effects), [effects]);
   const allActionTypes = useMemo(() => entities.map(({ key, scope }) => [...scope, key].join('/')), [entities]);
   const dispatchActions = useRef<
-    Record<string, { resolve: Function; reject: Function }>
+    Record<string, { resolve: Function; reject: Function } | any>
   >({});
+  dispatchActions.current.allActionTypes = allActionTypes;
+  dispatchActions.current.put = (message: any) => channel.put(message);
+  dispatchActions.current.reducerDispatch = reducerDispatch;
   const dispatch = useCallback((action: A) => {
     return new Promise((resolve, reject) => {
       const withMetaPayload = { ...action, [META_SYMBOL]: { id: uniqueId() } };
@@ -119,13 +122,12 @@ export function useSagaReducer<
           delete dispatchActions.current[withMetaPayload[META_SYMBOL].id];
         },
       };
-      setTimeout(() => channel.put(withMetaPayload), 0);
-      reducerDispatch(action);
-      if (!allActionTypes.includes(action.type)) {
+      setTimeout(() => dispatchActions.current.put(withMetaPayload), 0);
+      dispatchActions.current.reducerDispatch(action);
+      if (!dispatchActions.current.allActionTypes.includes(action.type)) {
         dispatchActions.current[withMetaPayload[META_SYMBOL].id].resolve();
       }
     });
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const getState = useCallback(() => sagaEnv.current, []);
