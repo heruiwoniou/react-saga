@@ -40,7 +40,7 @@ export type ReducerMap<S, A extends AnyAction> = {
 export type EffectsGeneratorFunction<A, EffectsMethods> = (
   action: A,
   combineEffectsMethods: EffectsMethods
-) => Generator;
+) => Generator<any, any>;
 
 export type EffectGeneratorFunction<
   A,
@@ -101,6 +101,8 @@ export function useSagaReducer<
   const sagaEnv = useRef(state);
   sagaEnv.current = state;
   const channel = useMemo(() => stdChannel(), []);
+  const entities = useMemo(() => flattenEntries(effects), []);
+  const allActionTypes = useMemo(() => entities.map(({ key, scope }) => [...scope, key].join('/')), [entities]);
   const dispatchActions = useRef<
     Record<string, { resolve: Function; reject: Function }>
   >({});
@@ -117,8 +119,12 @@ export function useSagaReducer<
           delete dispatchActions.current[withMetaPayload[META_SYMBOL].id];
         },
       };
-      setTimeout(() => channel.put(withMetaPayload), 0);
-      reducerDispatch(action);
+      if (allActionTypes.includes(action.type)) {
+        setTimeout(() => channel.put(withMetaPayload), 0);
+      } else {
+        reducerDispatch(action);
+        dispatchActions.current[withMetaPayload[META_SYMBOL].id].resolve();
+      }
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,7 +132,6 @@ export function useSagaReducer<
   const getState = useCallback(() => sagaEnv.current, []);
   useEffect(() => {
     const task = runSaga({ channel, dispatch, getState }, function* () {
-      const entities = flattenEntries(effects);
       for (let i = 0; i < entities.length; i++) {
         const { scope, key, generator } = entities[i];
         yield sagaEffects.takeEvery(
