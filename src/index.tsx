@@ -161,8 +161,7 @@ export function useSagaReducer<
       }
     });
     return () => task.cancel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [entities]);
 
   return [state, dispatch];
 }
