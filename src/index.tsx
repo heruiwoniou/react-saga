@@ -119,10 +119,9 @@ export function useSagaReducer<
           delete dispatchActions.current[withMetaPayload[META_SYMBOL].id];
         },
       };
-      if (allActionTypes.includes(action.type)) {
-        setTimeout(() => channel.put(withMetaPayload), 0);
-      } else {
-        reducerDispatch(action);
+      setTimeout(() => channel.put(withMetaPayload), 0);
+      reducerDispatch(action);
+      if (!allActionTypes.includes(action.type)) {
         dispatchActions.current[withMetaPayload[META_SYMBOL].id].resolve();
       }
     });
