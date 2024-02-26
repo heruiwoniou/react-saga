@@ -101,7 +101,7 @@ export function useSagaReducer<
   const sagaEnv = useRef(state);
   sagaEnv.current = state;
   const channel = useMemo(() => stdChannel(), []);
-  const entities = useMemo(() => flattenEntries(effects), []);
+  const entities = useMemo(() => flattenEntries(effects), [effects]);
   const allActionTypes = useMemo(() => entities.map(({ key, scope }) => [...scope, key].join('/')), [entities]);
   const dispatchActions = useRef<
     Record<string, { resolve: Function; reject: Function }>
