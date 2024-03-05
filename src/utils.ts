@@ -22,7 +22,9 @@ export const uniqueId = () => {
 };
 
 export function isGenerator(target: any): boolean {
-  return target.constructor.name === "GeneratorFunction";
+  return (
+    target.constructor?.prototype?.[Symbol.toStringTag] === "GeneratorFunction"
+  );
 }
 
 export function flattenEntries<
