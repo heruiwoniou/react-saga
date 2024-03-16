@@ -18,7 +18,7 @@ import {
 import * as sagaEffects from "redux-saga/effects";
 import { AnyAction, runSaga, stdChannel } from "redux-saga";
 import { ImmerReducer, useImmerReducer } from "use-immer";
-import { Draft } from "immer";
+import { Draft, produce } from "immer";
 
 export type OriginalEffects = typeof sagaEffects;
 
@@ -69,6 +69,19 @@ export type Model<S, R, E> = {
   [key: string]: any;
 };
 
+function useImmerBySettingsReducer<S, A, I>(
+  reducer: ImmerReducer<S, A>,
+  initializerArg: S & I,
+  initializer?: (arg: S & I) => S,
+  disabledImmer?: boolean
+) {
+  const cachedReducer = useMemo(
+    () => (disabledImmer ? reducer as any : produce(reducer)),
+    [reducer, disabledImmer],
+  );
+  return useReducer(cachedReducer, initializerArg as any, initializer as any);
+};
+
 export function useSagaReducer<
   S extends Record<string, any>,
   R extends ReducerMap<S, A>,
@@ -80,6 +93,7 @@ export function useSagaReducer<
     reducer: initialReducer,
     state: initialState,
     effects = EMPTY_OBJECT,
+    disabledImmer = false,
   } = props;
   const defaultReducer = {
     [SET_SYMBOL](
@@ -90,14 +104,15 @@ export function useSagaReducer<
     },
   };
 
-  const [state, reducerDispatch] = useImmerReducer<S, A>(function (
-    draft,
-    action
-  ) {
-    ({ ...defaultReducer, ...initialReducer })[action.type]?.(draft, action) ||
-      draft;
-  },
-    initialState);
+  const [state, reducerDispatch] = useImmerBySettingsReducer<S, A, any>(
+    function (draft: any, action: any) {
+      return { ...defaultReducer, ...initialReducer }[action.type]?.(draft, action) || draft;
+    } as any,
+    initialState,
+    undefined,
+    disabledImmer,
+  );
+
   const sagaEnv = useRef(state);
   sagaEnv.current = state;
   const channel = useMemo(() => stdChannel(), []);
@@ -201,10 +216,10 @@ export default function ContextCreator<
     );
   };
 
-  const connect = (Component: React.ComponentType<any>) => () =>
+  const connect = (Component: React.ComponentType<any>) => (props: any) =>
   (
     <ContextProvider>
-      <Component />
+      <Component {...props} />
     </ContextProvider>
   );
 
